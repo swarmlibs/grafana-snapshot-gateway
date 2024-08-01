@@ -1,37 +1,34 @@
 package grafana
 
-import "encoding/json"
-
-type GrafanaDashboard map[string]interface{}
-
-type GrafanaDashboardSnapshot struct {
-	Dashboard map[string]interface{} `json:"dashboard"`
-	Name      string                 `json:"name,omitempty"`
-	Expires   int                    `json:"expires,omitempty"`
-	External  bool                   `json:"external,omitempty"`
-	Key       string                 `json:"key,omitempty"`
-	DeleteKey string                 `json:"deleteKey,omitempty"`
+func NewGrafanaDashboard() *GrafanaDashboard {
+	return &GrafanaDashboard{}
 }
 
-func (g *GrafanaDashboardSnapshot) GetDashboardWithoutData() (GrafanaDashboard, error) {
-	// Make a copy of the dashboard
-	d, err := json.Marshal(g.Dashboard)
-	if err != nil {
-		return nil, err
-	}
+type GrafanaDashboard struct {
+	Dashboard GrafanaDashboardModel `json:"dashboard"`
+	FolderUid string                `json:"folderUid,omitempty"`
+	Message   string                `json:"message,omitempty"`
+	Overwrite bool                  `json:"overwrite,omitempty"`
+}
 
-	// Unmarshal the dashboard to a new struct
-	var dashboard GrafanaDashboard
-	json.Unmarshal(d, &dashboard)
+func (g *GrafanaDashboard) SetFolderUid(folderUid string) {
+	g.FolderUid = folderUid
+}
 
-	// Remove snapshotData from dashboard
-	if panels, ok := dashboard["panels"].([]interface{}); ok {
-		for _, panel := range panels {
-			if panelMap, ok := panel.(map[string]interface{}); ok {
-				delete(panelMap, "snapshotData")
-			}
-		}
-	}
+func (g *GrafanaDashboard) SetMessage(message string) {
+	g.Message = message
+}
 
-	return dashboard, nil
+func (g *GrafanaDashboard) SetOverwrite(overwrite bool) {
+	g.Overwrite = overwrite
+}
+
+func (g *GrafanaDashboard) SetDashboardModel(dashboard GrafanaDashboardModel) {
+	g.Dashboard = dashboard
+}
+
+type GrafanaDashboardModel map[string]interface{}
+
+func (g *GrafanaDashboardModel) Set(key string, value string) {
+	(*g)[key] = value
 }

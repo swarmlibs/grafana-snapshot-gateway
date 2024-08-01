@@ -1,9 +1,7 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"strings"
 
@@ -74,6 +72,7 @@ func main() {
 
 		// Create a new uid for the folder, dashboard and snapshot
 		uid := uuid.Must(uuid.NewV4()).String()
+		snapshot.SetKey(uid)
 
 		// Create a new folder
 		level.Info(logger).Log("msg", "Creating folder", "uid", uid)
@@ -84,21 +83,27 @@ func main() {
 		}
 
 		// Create a new dashboard
-		dashboard, err := snapshot.GetDashboardWithoutData()
-		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
-		level.Info(logger).Log("msg", "Creating dashboard", "uid", uid)
-		_, err = grafanaClient.CreateDashboard(uid, dashboard)
-		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
+		// dashboardModel, err := snapshot.GetDashboardModel()
+		// if err != nil {
+		// 	c.JSON(500, gin.H{"error": err.Error()})
+		// 	return
+		// }
+		// level.Info(logger).Log("msg", "Creating dashboard", "uid", uid)
+		// dashboard := grafana.NewGrafanaDashboard()
+		// dashboard.SetFolderUid(uid)
+		// dashboard.SetDashboardModel(dashboardModel)
+		// res, err := grafanaClient.CreateDashboard(uid, *dashboard)
+		// if err != nil {
+		// 	c.JSON(500, gin.H{"error": err.Error()})
+		// 	return
+		// }
+
+		// var dashboardResponse gin.H
+		// grafanaClient.ShouldBindJSON(res.Body, &dashboardResponse)
+		// fmt.Printf("res: %v\n", dashboardResponse)
 
 		// Create a new snapshot
-		level.Info(logger).Log("msg", "Creating snapshot", "key", uid)
-		snapshot.Key = uid
+		level.Info(logger).Log("msg", "Creating snapshot", "uid", uid)
 		payload, err := grafanaClient.CreateSnapshot(uid, snapshot)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
@@ -106,12 +111,7 @@ func main() {
 		}
 
 		var proxiedResponse gin.H
-		body, err := io.ReadAll(payload.Body)
-		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
-		json.Unmarshal(body, &proxiedResponse)
+		grafanaClient.ShouldBindJSON(payload.Body, &proxiedResponse)
 		fmt.Printf("payload: %v\n", proxiedResponse)
 
 		// Return the snapshot response

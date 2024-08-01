@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 )
 
@@ -58,4 +59,12 @@ func (g *GrafanaClient) Do(req *http.Request) (*http.Response, error) {
 	req.Header.Set("Content-Type", "application/json")
 	req.SetBasicAuth(g.Username, g.Password)
 	return g.http.Do(req)
+}
+
+func (g *GrafanaClient) ShouldBindJSON(source io.Reader, target any) error {
+	body, err := io.ReadAll(source)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(body, target)
 }
