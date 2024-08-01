@@ -78,7 +78,9 @@ func main() {
 
 		// Create a new uid for the folder, dashboard and snapshot
 		uid := uuid.Must(uuid.NewV4()).String()
+
 		snapshot.SetKey(uid)
+		level.Info(logger).Log("msg", "Creating a snapshot", "uid", uid)
 
 		// Create a new folder
 		_, err = gf.CreateFolder(uid, uid)
@@ -88,7 +90,6 @@ func main() {
 		}
 
 		// Create a new snapshot
-		level.Info(logger).Log("msg", "Creating a snapshot", "uid", snapshot.Key)
 		snapshotResponse, err := gf.CreateSnapshot(snapshot.Key, snapshot)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
@@ -102,8 +103,13 @@ func main() {
 		var proxiedSnapshotResponse gin.H
 		grafana.UnmarshalResponseBody(snapshotResponse.Body, &proxiedSnapshotResponse)
 		c.JSON(snapshotResponse.StatusCode, proxiedSnapshotResponse)
+
+		level.Info(logger).Log("msg", "Snapshot created", "uid", uid)
 	})
 
 	// listen and serve, default 0.0.0.0:3003 (for windows "localhost:3003")
-	r.Run(*listenAddr)
+	if err := r.Run(*listenAddr); err != nil {
+		level.Error(logger).Log("msg", "Failed to start server", "err", err)
+		os.Exit(1)
+	}
 }
