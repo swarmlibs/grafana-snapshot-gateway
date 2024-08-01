@@ -52,14 +52,16 @@ func main() {
 	r := gin.Default()
 	r.SetTrustedProxies(nil)
 
-	grafanaClient := grafana.NewGrafanaClient(*grafanaUrl, "", "")
+	gf := grafana.NewGrafanaClient(*grafanaUrl, "", "")
+	gf.SetLogger(logger)
+
 	if *grafanaBasicAuth != "" {
 		creds := strings.Split(*grafanaBasicAuth, ":")
 		if len(creds) != 2 {
 			level.Error(logger).Log("msg", "Invalid credentials")
 			os.Exit(1)
 		}
-		grafanaClient.SetBasicAuth(creds[0], creds[1])
+		gf.SetBasicAuth(creds[0], creds[1])
 	}
 
 	// POST /api/snapshots
@@ -77,15 +79,31 @@ func main() {
 
 		// Create a new folder
 		level.Info(logger).Log("msg", "creating a folder", "uid", uid)
-		_, err = grafanaClient.CreateFolder(uid, uid)
+		_, err = gf.CreateFolder(uid, uid)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
 
+		// Create a new dashboard
+		dashboardModel, _ := snapshot.GetDashboardModel()
+		dashboard := types.NewGrafanaDashboard()
+		dashboard.SetFolderUid(uid)
+		dashboard.SetDashboardModel(dashboardModel)
+
+		level.Info(logger).Log("msg", "creating a dashboard", "uid", dashboard.Dashboard["uid"])
+		d, err := gf.CreateDashboard(uid, *dashboard)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		var proxiedDashoard gin.H
+		grafana.UnmarshalResponseBody(d.Body, &proxiedDashoard)
+		fmt.Printf("dashboard: %v\n", proxiedDashoard)
+
 		// Create a new snapshot
-		level.Info(logger).Log("msg", "creating a snapshot", "uid", uid)
-		payload, err := grafanaClient.CreateSnapshot(uid, snapshot)
+		level.Info(logger).Log("msg", "creating a snapshot", "uid", snapshot.Key)
+		payload, err := gf.CreateSnapshot(snapshot.Key, snapshot)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return

@@ -1,11 +1,7 @@
 package grafana
 
-import (
-	"fmt"
-)
-
 func (g *GrafanaClient) CreateFolder(uid string, title string) (*Response, error) {
-	body := []byte(fmt.Sprintf(`{"uid": "%s","title": "%s"}`, uid, title))
+	body := interface{}(map[string]interface{}{"uid": uid, "title": title})
 	req, _ := g.NewRequest("POST", "/api/folders", body)
 	return g.Do(req)
 }

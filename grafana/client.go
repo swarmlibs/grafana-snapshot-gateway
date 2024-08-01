@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 )
 
 type GrafanaClient struct {
@@ -12,6 +15,7 @@ type GrafanaClient struct {
 	Username string
 	Password string
 	http     *http.Client
+	logger   log.Logger
 }
 
 type Request = http.Request
@@ -26,12 +30,17 @@ func NewGrafanaClient(url, username, password string) *GrafanaClient {
 	}
 }
 
-func UnmarshalResponseBody(source io.Reader, target any) error {
+func UnmarshalResponseBody(source io.ReadCloser, target any) error {
+	defer source.Close()
 	body, err := io.ReadAll(source)
 	if err != nil {
 		return err
 	}
 	return json.Unmarshal(body, target)
+}
+
+func (g *GrafanaClient) SetLogger(logger log.Logger) {
+	g.logger = logger
 }
 
 func (g *GrafanaClient) SetBasicAuth(username, password string) {
@@ -44,6 +53,7 @@ func (g *GrafanaClient) NewRequest(method string, path string, body any) (*Reque
 	if err != nil {
 		return nil, err
 	}
+	level.Info(g.logger).Log("msg", "request", "method", method, "path", path)
 	req, err := http.NewRequest(method, g.Url+path, bytes.NewBuffer(bodybuf))
 	if err != nil {
 		return nil, err
