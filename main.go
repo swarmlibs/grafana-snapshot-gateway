@@ -1,24 +1,36 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
+	"strings"
 
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
+	"github.com/gofrs/uuid"
 	"github.com/prometheus-operator/prometheus-operator/pkg/versionutil"
 	"github.com/prometheus/common/version"
+	"github.com/swarmlibs/grafana-snapshot-gateway/grafana"
 )
+
+type GrafanaSnapshotBody struct {
+	Dashboard map[string]interface{} `json:"dashboard"`
+	Name      string                 `json:"name,omitempty"`
+	Expires   int                    `json:"expires,omitempty"`
+	External  bool                   `json:"external,omitempty"`
+	Key       string                 `json:"key,omitempty"`
+	DeleteKey string                 `json:"deleteKey,omitempty"`
+}
 
 func main() {
 	app := kingpin.New("grafana-snapshot-gateway", "")
 
 	listenAddr := app.Flag("listen-addr", "The address to listen on for HTTP requests.").Default(":3003").String()
 	grafanaUrl := app.Flag("grafana-url", "Grafana URL").Required().String()
-	// grafanaCredentials := app.Flag("grafana-credentials", "Grafana credentials").String()
+	grafanaBasicAuth := app.Flag("grafana-basic-auth", "Grafana credentials").String()
 
 	var logger log.Logger
 	logger = log.NewLogfmtLogger(os.Stdout)
@@ -49,13 +61,61 @@ func main() {
 	r := gin.Default()
 	r.SetTrustedProxies(nil)
 
-	// GET /api/snapshots
-	r.GET("/api/snapshots", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "pong",
+	grafanaClient := grafana.NewGrafanaClient(*grafanaUrl, "", "")
+	if *grafanaBasicAuth != "" {
+		creds := strings.Split(*grafanaBasicAuth, ":")
+		if len(creds) != 2 {
+			level.Error(logger).Log("msg", "Invalid credentials")
+			os.Exit(1)
+		}
+		grafanaClient.SetBasicAuth(creds[0], creds[1])
+	}
+
+	// POST /api/snapshots
+	r.POST("/api/snapshots", func(c *gin.Context) {
+		var body GrafanaSnapshotBody
+		if err := c.ShouldBindJSON(&body); err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+
+		if body.Dashboard == nil {
+			c.JSON(400, gin.H{"error": "dashboard is required"})
+			return
+		}
+
+		// Create dashboard payload
+		var dashboardCreationPayload map[string]interface{}
+		uid := uuid.Must(uuid.NewV4()).String()
+		copy(body.Dashboard, &dashboardCreationPayload)
+
+		// Override dashboard UID
+		fmt.Printf("Snapshot UID: %v\n", body.Dashboard["uid"])
+		body.Dashboard["uid"] = uid
+		dashboardCreationPayload["uid"] = uid
+		fmt.Printf("Dashboard UID: %v\n", dashboardCreationPayload["uid"])
+
+		if panels, ok := dashboardCreationPayload["panels"].([]interface{}); ok {
+			for _, panel := range panels {
+				if panelMap, ok := panel.(map[string]interface{}); ok {
+					delete(panelMap, "snapshotData")
+				}
+			}
+		}
+
+		// Create a folder
+		grafanaClient.CreateFolder(uid, uid)
+
+		c.JSON(200, gin.H{
+			"status": "ok",
 		})
 	})
 
 	// listen and serve, default 0.0.0.0:3003 (for windows "localhost:3003")
 	r.Run(*listenAddr)
+}
+
+func copy(source any, target any) {
+	a, _ := json.Marshal(source)
+	json.Unmarshal(a, target)
 }

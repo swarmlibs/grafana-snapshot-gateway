@@ -6,6 +6,7 @@ require (
 	github.com/alecthomas/kingpin/v2 v2.4.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-kit/log v0.2.1
+	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/prometheus-operator/prometheus-operator v0.75.2
 	github.com/prometheus/common v0.55.0
 )

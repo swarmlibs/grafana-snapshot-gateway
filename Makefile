@@ -43,7 +43,7 @@ node-metadata-agent:
 	$(GO_BUILD_RECIPE) -o bin/$@
 
 run:
-	go run main.go --grafana-url http://localhost:3000
+	go run main.go --grafana-url http://grafana-snapshots.svc.cluster.local:3333 --grafana-basic-auth grafana:grafana
 
 clean:
 	rm -rf bin
