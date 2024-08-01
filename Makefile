@@ -37,9 +37,9 @@ tidy:
 	go mod tidy -v
 
 .PHONY: build
-build: clean node-metadata-agent
+build: clean grafana-snapshot-gateway
 
-node-metadata-agent:
+grafana-snapshot-gateway:
 	$(GO_BUILD_RECIPE) -o bin/$@
 
 run:
