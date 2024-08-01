@@ -92,7 +92,7 @@ func main() {
 		}
 
 		var proxiedResponse gin.H
-		grafanaClient.ShouldBindJSON(payload.Body, &proxiedResponse)
+		grafana.UnmarshalResponseBody(payload.Body, &proxiedResponse)
 		fmt.Printf("payload: %v\n", proxiedResponse)
 
 		// Return the snapshot response
