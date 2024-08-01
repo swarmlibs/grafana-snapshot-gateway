@@ -44,12 +44,12 @@ func main() {
 	level.Info(logger).Log("msg", "Starting node-metadata-agent", "version", version.Info())
 	level.Info(logger).Log("msg", fmt.Sprintf("Listening on %s", *listenAddr))
 	level.Info(logger).Log("msg", fmt.Sprintf("Grafana URL: %s", *grafanaUrl))
-	level.Info(logger).Log("build_context", version.BuildContext())
 
 	gin.SetMode(gin.ReleaseMode)
 	gin.DisableConsoleColor()
 
 	r := gin.Default()
+	r.Use(gin.Recovery())
 	r.SetTrustedProxies(nil)
 
 	gf := grafana.NewGrafanaClient(*grafanaUrl, "", "")
@@ -62,7 +62,10 @@ func main() {
 			os.Exit(1)
 		}
 		gf.SetBasicAuth(creds[0], creds[1])
+		level.Info(logger).Log("msg", "Grafana basic auth enabled", "uname", creds[0])
 	}
+
+	level.Info(logger).Log("build_context", version.BuildContext())
 
 	// POST /api/snapshots
 	r.POST("/api/snapshots", func(c *gin.Context) {
@@ -85,7 +88,7 @@ func main() {
 		}
 
 		// Create a new snapshot
-		level.Info(logger).Log("msg", "creating a snapshot", "uid", snapshot.Key)
+		level.Info(logger).Log("msg", "Creating a snapshot", "uid", snapshot.Key)
 		snapshotResponse, err := gf.CreateSnapshot(snapshot.Key, snapshot)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
