@@ -76,7 +76,7 @@ func main() {
 		snapshot.SetKey(uid)
 
 		// Create a new folder
-		level.Info(logger).Log("msg", "Creating a folder", "uid", uid)
+		level.Info(logger).Log("msg", "creating a folder", "uid", uid)
 		_, err = grafanaClient.CreateFolder(uid, uid)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
@@ -84,7 +84,7 @@ func main() {
 		}
 
 		// Create a new snapshot
-		level.Info(logger).Log("msg", "Creating a snapshot", "uid", uid)
+		level.Info(logger).Log("msg", "creating a snapshot", "uid", uid)
 		payload, err := grafanaClient.CreateSnapshot(uid, snapshot)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})

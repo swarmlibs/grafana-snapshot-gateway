@@ -1,15 +1,11 @@
 package grafana
 
 import (
-	"bytes"
-	"encoding/json"
-
 	"github.com/swarmlibs/grafana-snapshot-gateway/grafana/types"
 )
 
 func (g *GrafanaClient) CreateSnapshot(key string, snapshot types.GrafanaDashboardSnapshot) (*Response, error) {
-	body, _ := json.Marshal(snapshot)
-	req, _ := g.NewRequest("POST", g.Url+"/api/snapshots", bytes.NewBuffer(body))
+	req, _ := g.NewRequest("POST", "/api/snapshots", snapshot)
 	return g.Do(req)
 }
 

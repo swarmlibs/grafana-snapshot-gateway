@@ -44,7 +44,7 @@ func (g *GrafanaClient) NewRequest(method string, path string, body any) (*Reque
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(method, path, bytes.NewBuffer(bodybuf))
+	req, err := http.NewRequest(method, g.Url+path, bytes.NewBuffer(bodybuf))
 	if err != nil {
 		return nil, err
 	}
