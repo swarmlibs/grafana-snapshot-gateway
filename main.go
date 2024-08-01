@@ -75,35 +75,15 @@ func main() {
 		snapshot.SetKey(uid)
 
 		// Create a new folder
-		level.Info(logger).Log("msg", "Creating folder", "uid", uid)
+		level.Info(logger).Log("msg", "Creating a folder", "uid", uid)
 		_, err = grafanaClient.CreateFolder(uid, uid)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
 
-		// Create a new dashboard
-		// dashboardModel, err := snapshot.GetDashboardModel()
-		// if err != nil {
-		// 	c.JSON(500, gin.H{"error": err.Error()})
-		// 	return
-		// }
-		// level.Info(logger).Log("msg", "Creating dashboard", "uid", uid)
-		// dashboard := grafana.NewGrafanaDashboard()
-		// dashboard.SetFolderUid(uid)
-		// dashboard.SetDashboardModel(dashboardModel)
-		// res, err := grafanaClient.CreateDashboard(uid, *dashboard)
-		// if err != nil {
-		// 	c.JSON(500, gin.H{"error": err.Error()})
-		// 	return
-		// }
-
-		// var dashboardResponse gin.H
-		// grafanaClient.ShouldBindJSON(res.Body, &dashboardResponse)
-		// fmt.Printf("res: %v\n", dashboardResponse)
-
 		// Create a new snapshot
-		level.Info(logger).Log("msg", "Creating snapshot", "uid", uid)
+		level.Info(logger).Log("msg", "Creating a snapshot", "uid", uid)
 		payload, err := grafanaClient.CreateSnapshot(uid, snapshot)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
