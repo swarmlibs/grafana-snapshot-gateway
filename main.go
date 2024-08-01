@@ -78,43 +78,27 @@ func main() {
 		snapshot.SetKey(uid)
 
 		// Create a new folder
-		level.Info(logger).Log("msg", "creating a folder", "uid", uid)
 		_, err = gf.CreateFolder(uid, uid)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
 
-		// Create a new dashboard
-		dashboardModel, _ := snapshot.GetDashboardModel()
-		dashboard := types.NewGrafanaDashboard()
-		dashboard.SetFolderUid(uid)
-		dashboard.SetDashboardModel(dashboardModel)
-
-		level.Info(logger).Log("msg", "creating a dashboard", "uid", dashboard.Dashboard["uid"])
-		d, err := gf.CreateDashboard(uid, *dashboard)
-		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
-		var proxiedDashoard gin.H
-		grafana.UnmarshalResponseBody(d.Body, &proxiedDashoard)
-		fmt.Printf("dashboard: %v\n", proxiedDashoard)
-
 		// Create a new snapshot
 		level.Info(logger).Log("msg", "creating a snapshot", "uid", snapshot.Key)
-		payload, err := gf.CreateSnapshot(snapshot.Key, snapshot)
+		snapshotResponse, err := gf.CreateSnapshot(snapshot.Key, snapshot)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
 
-		var proxiedResponse gin.H
-		grafana.UnmarshalResponseBody(payload.Body, &proxiedResponse)
-		fmt.Printf("payload: %v\n", proxiedResponse)
+		// Delete the folder
+		gf.DeleteFolder(snapshot.Key)
 
 		// Return the snapshot response
-		c.JSON(payload.StatusCode, proxiedResponse)
+		var proxiedSnapshotResponse gin.H
+		grafana.UnmarshalResponseBody(snapshotResponse.Body, &proxiedSnapshotResponse)
+		c.JSON(snapshotResponse.StatusCode, proxiedSnapshotResponse)
 	})
 
 	// listen and serve, default 0.0.0.0:3003 (for windows "localhost:3003")
