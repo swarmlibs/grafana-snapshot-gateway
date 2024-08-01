@@ -43,7 +43,7 @@ node-metadata-agent:
 	$(GO_BUILD_RECIPE) -o bin/$@
 
 run:
-	go run main.go
+	go run main.go --grafana-url http://localhost:3000
 
 clean:
 	rm -rf bin

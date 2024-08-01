@@ -16,6 +16,9 @@ import (
 func main() {
 	app := kingpin.New("grafana-snapshot-gateway", "")
 
+	grafanaUrl := app.Flag("grafana-url", "Grafana URL").Required().String()
+	// grafanaCredentials := app.Flag("grafana-credentials", "Grafana credentials").String()
+
 	var logger log.Logger
 	logger = log.NewLogfmtLogger(os.Stdout)
 	logger = level.NewFilter(logger, level.AllowAll())
@@ -35,6 +38,7 @@ func main() {
 	}
 
 	level.Info(logger).Log("msg", "Starting node-metadata-agent", "version", version.Info())
+	level.Info(logger).Log("msg", fmt.Sprintf("Grafana URL: %s", *grafanaUrl))
 	level.Info(logger).Log("build_context", version.BuildContext())
 
 	gin.SetMode(gin.ReleaseMode)
