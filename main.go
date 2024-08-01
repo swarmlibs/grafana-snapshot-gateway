@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -84,26 +83,7 @@ func main() {
 			return
 		}
 
-		// Create dashboard payload
-		var dashboardCreationPayload map[string]interface{}
 		uid := uuid.Must(uuid.NewV4()).String()
-		copy(body.Dashboard, &dashboardCreationPayload)
-
-		// Override dashboard UID
-		fmt.Printf("Snapshot UID: %v\n", body.Dashboard["uid"])
-		body.Dashboard["uid"] = uid
-		dashboardCreationPayload["uid"] = uid
-		fmt.Printf("Dashboard UID: %v\n", dashboardCreationPayload["uid"])
-
-		if panels, ok := dashboardCreationPayload["panels"].([]interface{}); ok {
-			for _, panel := range panels {
-				if panelMap, ok := panel.(map[string]interface{}); ok {
-					delete(panelMap, "snapshotData")
-				}
-			}
-		}
-
-		// Create a folder
 		grafanaClient.CreateFolder(uid, uid)
 
 		c.JSON(200, gin.H{
@@ -113,9 +93,4 @@ func main() {
 
 	// listen and serve, default 0.0.0.0:3003 (for windows "localhost:3003")
 	r.Run(*listenAddr)
-}
-
-func copy(source any, target any) {
-	a, _ := json.Marshal(source)
-	json.Unmarshal(a, target)
 }
