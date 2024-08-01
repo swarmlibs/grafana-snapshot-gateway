@@ -1,6 +1,7 @@
 package grafana
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -12,6 +13,9 @@ type GrafanaClient struct {
 	Password string
 	http     *http.Client
 }
+
+type Request = http.Request
+type Response = http.Response
 
 func NewGrafanaClient(url, username, password string) *GrafanaClient {
 	return &GrafanaClient{
@@ -35,8 +39,20 @@ func (g *GrafanaClient) SetBasicAuth(username, password string) {
 	g.Password = password
 }
 
-func (g *GrafanaClient) Do(req *http.Request) (*http.Response, error) {
+func (g *GrafanaClient) NewRequest(method string, path string, body any) (*Request, error) {
+	bodybuf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(method, path, bytes.NewBuffer(bodybuf))
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Set("Content-Type", "application/json")
+	return req, nil
+}
+
+func (g *GrafanaClient) Do(req *http.Request) (*Response, error) {
 	req.SetBasicAuth(g.Username, g.Password)
 	return g.http.Do(req)
 }
