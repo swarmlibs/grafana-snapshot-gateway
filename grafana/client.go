@@ -2,6 +2,7 @@ package grafana
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 )
@@ -27,29 +28,30 @@ func (g *GrafanaClient) SetBasicAuth(username, password string) {
 	g.Password = password
 }
 
-func (g *GrafanaClient) CreateFolder(uid string, title string) error {
+func (g *GrafanaClient) CreateFolder(uid string, title string) (*http.Response, error) {
 	body := []byte(fmt.Sprintf(`{"uid": "%s","title": "%s"}`, uid, title))
 	req, _ := http.NewRequest("POST", g.Url+"/api/folders", bytes.NewBuffer(body))
-	if _, err := g.Do(req); err != nil {
-		return err
-	}
-	return nil
+	return g.Do(req)
 }
 
-func (g *GrafanaClient) CreateDashboard(uid, dashboard map[string]interface{}) error {
-	return nil
+func (g *GrafanaClient) CreateDashboard(uid string, dashboard GrafanaDashboard) (*http.Response, error) {
+	body, _ := json.Marshal(dashboard)
+	req, _ := http.NewRequest("POST", g.Url+"/api/dashboards/db", bytes.NewBuffer(body))
+	return g.Do(req)
 }
 
-func (g *GrafanaClient) CreateSnapshot(dashboard map[string]interface{}, name string, expires int, external bool, key string, deleteKey string) error {
-	return nil
+func (g *GrafanaClient) CreateSnapshot(key string, snapshot GrafanaDashboardSnapshot) (*http.Response, error) {
+	body, _ := json.Marshal(snapshot)
+	req, _ := http.NewRequest("POST", g.Url+"/api/snapshots", bytes.NewBuffer(body))
+	return g.Do(req)
 }
 
-func (g *GrafanaClient) GetSnapshot(key string) (map[string]interface{}, error) {
+func (g *GrafanaClient) GetSnapshot(key string) (*http.Response, error) {
 	return nil, nil
 }
 
-func (g *GrafanaClient) DeleteSnapshot(key string) error {
-	return nil
+func (g *GrafanaClient) DeleteSnapshot(key string) (*http.Response, error) {
+	return nil, nil
 }
 
 func (g *GrafanaClient) Do(req *http.Request) (*http.Response, error) {

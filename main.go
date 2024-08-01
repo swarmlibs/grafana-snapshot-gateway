@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -14,15 +16,6 @@ import (
 	"github.com/prometheus/common/version"
 	"github.com/swarmlibs/grafana-snapshot-gateway/grafana"
 )
-
-type GrafanaSnapshotBody struct {
-	Dashboard map[string]interface{} `json:"dashboard"`
-	Name      string                 `json:"name,omitempty"`
-	Expires   int                    `json:"expires,omitempty"`
-	External  bool                   `json:"external,omitempty"`
-	Key       string                 `json:"key,omitempty"`
-	DeleteKey string                 `json:"deleteKey,omitempty"`
-}
 
 func main() {
 	app := kingpin.New("grafana-snapshot-gateway", "")
@@ -72,23 +65,57 @@ func main() {
 
 	// POST /api/snapshots
 	r.POST("/api/snapshots", func(c *gin.Context) {
-		var body GrafanaSnapshotBody
-		if err := c.ShouldBindJSON(&body); err != nil {
+		var err error
+		var snapshot grafana.GrafanaDashboardSnapshot
+		if err := c.ShouldBindJSON(&snapshot); err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
 
-		if body.Dashboard == nil {
-			c.JSON(400, gin.H{"error": "dashboard is required"})
+		// Create a new uid for the folder, dashboard and snapshot
+		uid := uuid.Must(uuid.NewV4()).String()
+
+		// Create a new folder
+		level.Info(logger).Log("msg", "Creating folder", "uid", uid)
+		_, err = grafanaClient.CreateFolder(uid, uid)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
 
-		uid := uuid.Must(uuid.NewV4()).String()
-		grafanaClient.CreateFolder(uid, uid)
+		// Create a new dashboard
+		dashboard, err := snapshot.GetDashboardWithoutData()
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		level.Info(logger).Log("msg", "Creating dashboard", "uid", uid)
+		_, err = grafanaClient.CreateDashboard(uid, dashboard)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
 
-		c.JSON(200, gin.H{
-			"status": "ok",
-		})
+		// Create a new snapshot
+		level.Info(logger).Log("msg", "Creating snapshot", "key", uid)
+		snapshot.Key = uid
+		payload, err := grafanaClient.CreateSnapshot(uid, snapshot)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+
+		var proxiedResponse gin.H
+		body, err := io.ReadAll(payload.Body)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		json.Unmarshal(body, &proxiedResponse)
+		fmt.Printf("payload: %v\n", proxiedResponse)
+
+		// Return the snapshot response
+		c.JSON(payload.StatusCode, proxiedResponse)
 	})
 
 	// listen and serve, default 0.0.0.0:3003 (for windows "localhost:3003")
