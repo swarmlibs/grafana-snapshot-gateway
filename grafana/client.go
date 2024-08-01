@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/swarmlibs/grafana-snapshot-gateway/grafana/types"
 )
 
 type GrafanaClient struct {
@@ -35,13 +37,13 @@ func (g *GrafanaClient) CreateFolder(uid string, title string) (*http.Response, 
 	return g.Do(req)
 }
 
-func (g *GrafanaClient) CreateDashboard(uid string, dashboard GrafanaDashboard) (*http.Response, error) {
+func (g *GrafanaClient) CreateDashboard(uid string, dashboard types.GrafanaDashboard) (*http.Response, error) {
 	body, _ := json.Marshal(dashboard)
 	req, _ := http.NewRequest("POST", g.Url+"/api/dashboards/db", bytes.NewBuffer(body))
 	return g.Do(req)
 }
 
-func (g *GrafanaClient) CreateSnapshot(key string, snapshot GrafanaDashboardSnapshot) (*http.Response, error) {
+func (g *GrafanaClient) CreateSnapshot(key string, snapshot types.GrafanaDashboardSnapshot) (*http.Response, error) {
 	body, _ := json.Marshal(snapshot)
 	req, _ := http.NewRequest("POST", g.Url+"/api/snapshots", bytes.NewBuffer(body))
 	return g.Do(req)

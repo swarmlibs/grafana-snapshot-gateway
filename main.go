@@ -13,6 +13,7 @@ import (
 	"github.com/prometheus-operator/prometheus-operator/pkg/versionutil"
 	"github.com/prometheus/common/version"
 	"github.com/swarmlibs/grafana-snapshot-gateway/grafana"
+	"github.com/swarmlibs/grafana-snapshot-gateway/grafana/types"
 )
 
 func main() {
@@ -64,7 +65,7 @@ func main() {
 	// POST /api/snapshots
 	r.POST("/api/snapshots", func(c *gin.Context) {
 		var err error
-		var snapshot grafana.GrafanaDashboardSnapshot
+		var snapshot types.GrafanaDashboardSnapshot
 		if err := c.ShouldBindJSON(&snapshot); err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return

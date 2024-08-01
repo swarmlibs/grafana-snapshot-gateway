@@ -1,4 +1,4 @@
-package grafana
+package types
 
 func NewGrafanaDashboard() *GrafanaDashboard {
 	return &GrafanaDashboard{}

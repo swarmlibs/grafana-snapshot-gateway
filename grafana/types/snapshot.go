@@ -1,4 +1,4 @@
-package grafana
+package types
 
 import "encoding/json"
 
