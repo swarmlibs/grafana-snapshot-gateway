@@ -16,6 +16,7 @@ import (
 func main() {
 	app := kingpin.New("grafana-snapshot-gateway", "")
 
+	listenAddr := app.Flag("listen-addr", "The address to listen on for HTTP requests.").Default(":3003").String()
 	grafanaUrl := app.Flag("grafana-url", "Grafana URL").Required().String()
 	// grafanaCredentials := app.Flag("grafana-credentials", "Grafana credentials").String()
 
@@ -38,6 +39,7 @@ func main() {
 	}
 
 	level.Info(logger).Log("msg", "Starting node-metadata-agent", "version", version.Info())
+	level.Info(logger).Log("msg", fmt.Sprintf("Listening on %s", *listenAddr))
 	level.Info(logger).Log("msg", fmt.Sprintf("Grafana URL: %s", *grafanaUrl))
 	level.Info(logger).Log("build_context", version.BuildContext())
 
@@ -54,5 +56,5 @@ func main() {
 		})
 	})
 
-	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
+	r.Run(*listenAddr) // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }
