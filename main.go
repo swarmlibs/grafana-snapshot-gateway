@@ -56,5 +56,6 @@ func main() {
 		})
 	})
 
-	r.Run(*listenAddr) // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
+	// listen and serve, default 0.0.0.0:3003 (for windows "localhost:3003")
+	r.Run(*listenAddr)
 }
