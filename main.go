@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 
@@ -66,6 +67,12 @@ func main() {
 	}
 
 	level.Info(logger).Log("build_context", version.BuildContext())
+
+	// ANY /
+	// Redirect to Grafana URL
+	r.NoRoute(func(ctx *gin.Context) {
+		ctx.Redirect(http.StatusTemporaryRedirect, *grafanaUrl)
+	})
 
 	// POST /api/snapshots
 	r.POST("/api/snapshots", func(c *gin.Context) {
