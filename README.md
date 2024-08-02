@@ -1,2 +1,2 @@
 # About
-A self-hosted Grafana snapshot gateway
+A snapshot gateway for self-hosted Grafana server
