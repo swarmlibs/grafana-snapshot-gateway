@@ -15,6 +15,7 @@ import (
 	"github.com/prometheus/common/version"
 	"github.com/swarmlibs/grafana-snapshot-gateway/grafana"
 	"github.com/swarmlibs/grafana-snapshot-gateway/grafana/types"
+	"github.com/swarmlibs/grafana-snapshot-gateway/middlewares"
 )
 
 func main() {
@@ -49,8 +50,9 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 	gin.DisableConsoleColor()
 
-	r := gin.Default()
+	r := gin.New()
 	r.Use(gin.Recovery())
+	r.Use(middlewares.StructuredLogger(&logger))
 	r.SetTrustedProxies(nil)
 
 	gf := grafana.NewGrafanaClient(*grafanaUrl, "", "")
