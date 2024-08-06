@@ -19,8 +19,14 @@ func StructuredLogger(logger *log.Logger) gin.HandlerFunc {
 		}
 
 		start := time.Now() // Start timer
+		method := c.Request.Method
 		path := c.Request.URL.Path
 		raw := c.Request.URL.RawQuery
+		msg := fmt.Sprintf("%s %s", method, path)
+
+		// Call the next middleware
+		level.Info(*logger).Log("msg", msg, "method", method, "path", path, "client_id", c.ClientIP())
+		c.Next()
 
 		// Fill the params
 		param := gin.LogFormatterParams{}
@@ -49,10 +55,6 @@ func StructuredLogger(logger *log.Logger) gin.HandlerFunc {
 			logEvent = level.Info
 		}
 
-		msg := fmt.Sprintf("%s %s", param.Method, param.Path)
 		logEvent(*logger).Log("msg", msg, "method", param.Method, "path", param.Path, "status_code", param.StatusCode, "body_size", param.BodySize, "client_id", param.ClientIP, "latency", param.Latency.String(), "error", param.ErrorMessage)
-
-		// Call the next middleware
-		c.Next()
 	}
 }
