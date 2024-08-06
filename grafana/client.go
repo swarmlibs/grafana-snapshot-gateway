@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
@@ -63,13 +64,19 @@ func (g *GrafanaClient) NewRequest(method string, path string, body any) (*Reque
 }
 
 func (g *GrafanaClient) Do(req *http.Request) (*Response, error) {
-	msg := fmt.Sprintf("%s %s", req.Method, req.URL.Path)
-	level.Info(g.logger).Log("msg", msg, "method", req.Method, "path", req.URL.Path, "host", req.URL.Host)
-
+	start := time.Now() // Start timer
 	// Set basic auth if username and password are set
 	if g.Username != "" && g.Password != "" {
 		req.SetBasicAuth(g.Username, g.Password)
 	}
 
-	return g.http.Do(req)
+	res, err := g.http.Do(req)
+
+	stop := time.Now() // Stop timer
+	latency := stop.Sub(start)
+
+	msg := fmt.Sprintf("%s %s", req.Method, req.URL.Path)
+	level.Info(g.logger).Log("msg", msg, "method", req.Method, "path", req.URL.Path, "status_code", res.StatusCode, "body_size", res.ContentLength, "latency", latency.String())
+
+	return res, err
 }
