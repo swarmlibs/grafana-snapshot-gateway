@@ -27,13 +27,12 @@ func main() {
 
 	// Server options
 	listenAddr := app.Flag("listen-addr", "The address to listen on for HTTP requests.").Default(":3003").String()
-	advertiseAddr := app.Flag("advertise-addr", "The address to advertise in URLs.").String()
 
 	// Grafana snapshot server
 	grafanaUrl := app.Flag("grafana-url", "Grafana URL").Required().String()
 	grafanaBasicAuth := app.Flag("grafana-basic-auth", "Grafana credentials").String()
 
-	// Snapshot options
+	// Snapshot deletion options
 	checkSnapshotBeforeDelete := app.Flag("check-snapshot-before-delete", "Check if snapshot exists before delete").Default("false").Bool()
 
 	var logger log.Logger
@@ -64,10 +63,6 @@ func main() {
 
 	level.Info(logger).Log("msg", "Starting node-metadata-agent", "version", version.Info())
 
-	if advertiseAddr != nil && *advertiseAddr != "" {
-		level.Info(logger).Log("msg", fmt.Sprintf("Advertise address: %s", *advertiseAddr))
-	}
-
 	level.Info(logger).Log("msg", fmt.Sprintf("Listening on %s", *listenAddr))
 	level.Info(logger).Log("msg", fmt.Sprintf("Grafana URL: %s", *grafanaUrl))
 
@@ -87,7 +82,7 @@ func main() {
 		creds := strings.Split(*grafanaBasicAuth, ":")
 		if len(creds) != 2 {
 			level.Error(logger).Log("msg", "Invalid credentials")
-			os.Exit(1)
+			os.Exit(2)
 		}
 		gf.SetBasicAuth(creds[0], creds[1])
 		level.Info(logger).Log("msg", "Grafana basic auth enabled", "uname", creds[0])
@@ -116,13 +111,6 @@ func main() {
 	// Create new snapshot
 	// POST /api/snapshots
 	r.POST("/api/snapshots", func(c *gin.Context) {
-		var proxiedAdvertiseAddr string
-		if advertiseAddr != nil && *advertiseAddr != "" {
-			proxiedAdvertiseAddr = *advertiseAddr
-		} else {
-			proxiedAdvertiseAddr = c.Request.Host
-		}
-
 		var err error
 		var snapshot types.GrafanaDashboardSnapshot
 
@@ -158,9 +146,6 @@ func main() {
 		// Customize the snapshot response
 		snapshotResponse := types.GrafanaDashboardSnapshotCreateResponse{}
 		grafana.UnmarshalResponseBody(snapshotCreationResponse.Body, &snapshotResponse)
-
-		// Override the delete URL
-		snapshotResponse.SetDeleteUrlHost(proxiedAdvertiseAddr)
 
 		// Return the snapshot response
 		level.Info(logger).Log("msg", "Snapshot created successfully", "uid", originalUid, "uid_overrided", overrideUid)
