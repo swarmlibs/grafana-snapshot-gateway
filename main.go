@@ -162,6 +162,7 @@ func main() {
 	// GET /api/snapshots-delete/:key
 	r.GET("/api/snapshots-delete/:key", func(c *gin.Context) {
 		key := c.Param("key")
+		level.Info(logger).Log("msg", "Delete snapshot", "key", key)
 		res, err := gf.DeleteSnapshot(key)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
