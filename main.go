@@ -166,11 +166,6 @@ func main() {
 	// Delete Snapshot by Key
 	// GET /api/snapshots-delete/:key
 	r.GET("/api/snapshots-delete/:key", func(c *gin.Context) {
-		if !*checkSnapshotBeforeDelete {
-			c.JSON(http.StatusOK, gin.H{"message": "Snapshot deleted successfully"})
-			return
-		}
-
 		key := c.Param("key")
 		res, err := gf.DeleteSnapshot(key)
 		if err != nil {
@@ -179,10 +174,14 @@ func main() {
 		}
 
 		var response types.GrafanaDashboardSnapshotDeleteResponse
-		grafana.UnmarshalResponseBody(res.Body, &response)
+		if !*checkSnapshotBeforeDelete {
+			response.Message = "Snapshot deleted successfully"
+			c.JSON(http.StatusOK, response)
+		} else {
+			grafana.UnmarshalResponseBody(res.Body, &response)
+			c.JSON(res.StatusCode, response)
+		}
 
-		// Return the snapshot response
-		c.JSON(res.StatusCode, response)
 		level.Info(logger).Log("msg", response.Message, "key", key)
 	})
 

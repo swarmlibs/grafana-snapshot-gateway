@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 )
 
 type GrafanaClient struct {
@@ -62,5 +63,6 @@ func (g *GrafanaClient) NewRequest(method string, path string, body any) (*Reque
 
 func (g *GrafanaClient) Do(req *http.Request) (*Response, error) {
 	req.SetBasicAuth(g.Username, g.Password)
+	level.Info(g.logger).Log("msg", "request", "method", req.Method, "path", req.URL.Path)
 	return g.http.Do(req)
 }
