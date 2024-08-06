@@ -136,7 +136,7 @@ func main() {
 		gf.DeleteFolder(snapshot.Key)
 
 		// Customize the snapshot response
-		snapshotResponse := types.GrafanaDashboardSnapshotResponse{}
+		snapshotResponse := types.GrafanaDashboardSnapshotCreateResponse{}
 		grafana.UnmarshalResponseBody(snapshotCreationResponse.Body, &snapshotResponse)
 
 		// Override the delete URL

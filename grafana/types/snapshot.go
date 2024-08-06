@@ -42,14 +42,14 @@ func (g *GrafanaDashboardSnapshot) GetDashboardModel() (GrafanaDashboardModel, e
 	return dashboard, nil
 }
 
-type GrafanaDashboardSnapshotResponse struct {
+type GrafanaDashboardSnapshotCreateResponse struct {
 	Key       string `json:"key"`
 	Url       string `json:"url"`
 	DeleteKey string `json:"deleteKey"`
 	DeleteUrl string `json:"deleteUrl"`
 }
 
-func (g *GrafanaDashboardSnapshotResponse) OverrideDeleteUrl(host string) (*GrafanaDashboardSnapshotResponse, error) {
+func (g *GrafanaDashboardSnapshotCreateResponse) OverrideDeleteUrl(host string) (*GrafanaDashboardSnapshotCreateResponse, error) {
 	deleteUrl, err := url.Parse(g.DeleteUrl)
 	if err != nil {
 		return nil, err
