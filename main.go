@@ -27,6 +27,7 @@ func main() {
 	app := kingpin.New("grafana-snapshot-gateway", "")
 
 	listenAddr := app.Flag("listen-addr", "The address to listen on for HTTP requests.").Default(":3003").String()
+	advertiseAddr := app.Flag("advertise-addr", "The address to advertise in URLs.").String()
 	grafanaUrl := app.Flag("grafana-url", "Grafana URL").Required().String()
 	grafanaBasicAuth := app.Flag("grafana-basic-auth", "Grafana credentials").String()
 
@@ -101,7 +102,12 @@ func main() {
 	// Create new snapshot
 	// POST /api/snapshots
 	r.POST("/api/snapshots", func(c *gin.Context) {
-		proxiedHost := c.Request.Host
+		var proxiedAdvertiseAddr string
+		if advertiseAddr != nil && *advertiseAddr != "" {
+			proxiedAdvertiseAddr = *advertiseAddr
+		} else {
+			proxiedAdvertiseAddr = c.Request.Host
+		}
 
 		var err error
 		var snapshot types.GrafanaDashboardSnapshot
@@ -140,7 +146,7 @@ func main() {
 		grafana.UnmarshalResponseBody(snapshotCreationResponse.Body, &snapshotResponse)
 
 		// Override the delete URL
-		snapshotResponse.OverrideDeleteUrl(proxiedHost)
+		snapshotResponse.SetDeleteUrlHost(proxiedAdvertiseAddr)
 
 		// Log the snapshot response
 		proxiedSnapshotResponseJson, _ := json.Marshal(snapshotResponse)

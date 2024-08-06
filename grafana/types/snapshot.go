@@ -49,7 +49,7 @@ type GrafanaDashboardSnapshotCreateResponse struct {
 	DeleteUrl string `json:"deleteUrl"`
 }
 
-func (g *GrafanaDashboardSnapshotCreateResponse) OverrideDeleteUrl(host string) (*GrafanaDashboardSnapshotCreateResponse, error) {
+func (g *GrafanaDashboardSnapshotCreateResponse) SetDeleteUrlHost(host string) (*GrafanaDashboardSnapshotCreateResponse, error) {
 	deleteUrl, err := url.Parse(g.DeleteUrl)
 	if err != nil {
 		return nil, err
