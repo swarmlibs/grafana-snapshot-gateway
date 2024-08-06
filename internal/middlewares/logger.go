@@ -45,7 +45,7 @@ func StructuredLogger(logger *log.Logger) gin.HandlerFunc {
 		}
 
 		msg := fmt.Sprintf("%s %s", param.Method, param.Path)
-		logEvent(*logger).Log("method", param.Method, "path", param.Path, "status_code", param.StatusCode, "body_size", param.BodySize, "client_id", param.ClientIP, "latency", param.Latency.String(), "error", param.ErrorMessage, "msg", msg)
+		logEvent(*logger).Log("msg", msg, "method", param.Method, "path", param.Path, "status_code", param.StatusCode, "body_size", param.BodySize, "client_id", param.ClientIP, "latency", param.Latency.String(), "error", param.ErrorMessage)
 
 		// Call the next middleware
 		c.Next()
