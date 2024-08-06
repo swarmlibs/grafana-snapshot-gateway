@@ -60,7 +60,7 @@ func main() {
 		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
 	)
 
-	mc := metrics.New("grafana_snapshot_gateway", ps)
+	mc := metrics.New("gf_snapshot_gateway", ps)
 
 	level.Info(logger).Log("msg", "Starting node-metadata-agent", "version", version.Info())
 
