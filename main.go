@@ -54,10 +54,6 @@ func main() {
 		os.Exit(2)
 	}
 
-	level.Info(logger).Log("msg", "Starting node-metadata-agent", "version", version.Info())
-	level.Info(logger).Log("msg", fmt.Sprintf("Listening on %s", *listenAddr))
-	level.Info(logger).Log("msg", fmt.Sprintf("Grafana URL: %s", *grafanaUrl))
-
 	ps := prometheus.NewRegistry()
 	ps.MustRegister(
 		collectors.NewGoCollector(),
@@ -65,6 +61,15 @@ func main() {
 	)
 
 	mc := metrics.New("grafana_snapshot_gateway", ps)
+
+	level.Info(logger).Log("msg", "Starting node-metadata-agent", "version", version.Info())
+
+	if advertiseAddr != nil && *advertiseAddr != "" {
+		level.Info(logger).Log("msg", fmt.Sprintf("Advertise address: %s", *advertiseAddr))
+	}
+
+	level.Info(logger).Log("msg", fmt.Sprintf("Listening on %s", *listenAddr))
+	level.Info(logger).Log("msg", fmt.Sprintf("Grafana URL: %s", *grafanaUrl))
 
 	gin.SetMode(gin.ReleaseMode)
 	gin.DisableConsoleColor()
@@ -86,6 +91,10 @@ func main() {
 		}
 		gf.SetBasicAuth(creds[0], creds[1])
 		level.Info(logger).Log("msg", "Grafana basic auth enabled", "uname", creds[0])
+	}
+
+	if *checkSnapshotBeforeDelete {
+		level.Info(logger).Log("msg", "Check snapshot before delete enabled")
 	}
 
 	level.Info(logger).Log("build_context", version.BuildContext())
