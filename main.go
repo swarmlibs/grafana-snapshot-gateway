@@ -18,7 +18,8 @@ import (
 	"github.com/prometheus/common/version"
 	"github.com/swarmlibs/grafana-snapshot-gateway/grafana"
 	"github.com/swarmlibs/grafana-snapshot-gateway/grafana/types"
-	"github.com/swarmlibs/grafana-snapshot-gateway/middlewares"
+	"github.com/swarmlibs/grafana-snapshot-gateway/internal/metrics"
+	"github.com/swarmlibs/grafana-snapshot-gateway/internal/middlewares"
 )
 
 func main() {
@@ -63,6 +64,8 @@ func main() {
 		collectors.NewGoCollector(),
 		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
 	)
+
+	mc := metrics.New("grafana_snapshot_gateway", ps)
 
 	gf := grafana.NewGrafanaClient(*grafanaUrl, "", "")
 	gf.SetLogger(logger)
@@ -129,6 +132,8 @@ func main() {
 		var proxiedSnapshotResponse gin.H
 		grafana.UnmarshalResponseBody(snapshotResponse.Body, &proxiedSnapshotResponse)
 		c.JSON(snapshotResponse.StatusCode, proxiedSnapshotResponse)
+
+		mc.OpsProcessed.Inc()
 
 		level.Info(logger).Log("msg", "Snapshot created", "uid", uid)
 	})
