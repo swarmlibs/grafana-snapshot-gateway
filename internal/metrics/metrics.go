@@ -6,14 +6,18 @@ import (
 )
 
 type MetricsCollector struct {
-	OpsProcessed prometheus.Counter
+	ProcessedOpsTotalCounter prometheus.Counter
 }
 
 func New(prefix string, ps *prometheus.Registry) MetricsCollector {
-	return MetricsCollector{
-		OpsProcessed: promauto.NewCounter(prometheus.CounterOpts{
+	mc := MetricsCollector{
+		ProcessedOpsTotalCounter: promauto.NewCounter(prometheus.CounterOpts{
 			Name: prefix + "_processed_ops_total",
 			Help: "The total number of processed events",
 		}),
 	}
+
+	ps.MustRegister(mc.ProcessedOpsTotalCounter)
+
+	return mc
 }

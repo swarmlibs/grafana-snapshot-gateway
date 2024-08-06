@@ -133,7 +133,8 @@ func main() {
 		grafana.UnmarshalResponseBody(snapshotResponse.Body, &proxiedSnapshotResponse)
 		c.JSON(snapshotResponse.StatusCode, proxiedSnapshotResponse)
 
-		mc.OpsProcessed.Inc()
+		// Increment the processed ops counter
+		mc.ProcessedOpsTotalCounter.Inc()
 
 		level.Info(logger).Log("msg", "Snapshot created", "uid", uid)
 	})
