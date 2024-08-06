@@ -51,14 +51,6 @@ func main() {
 	level.Info(logger).Log("msg", fmt.Sprintf("Listening on %s", *listenAddr))
 	level.Info(logger).Log("msg", fmt.Sprintf("Grafana URL: %s", *grafanaUrl))
 
-	gin.SetMode(gin.ReleaseMode)
-	gin.DisableConsoleColor()
-
-	r := gin.New()
-	r.Use(gin.Recovery())
-	r.Use(middlewares.StructuredLogger(&logger))
-	r.SetTrustedProxies(nil)
-
 	ps := prometheus.NewRegistry()
 	ps.MustRegister(
 		collectors.NewGoCollector(),
@@ -66,6 +58,15 @@ func main() {
 	)
 
 	mc := metrics.New("grafana_snapshot_gateway", ps)
+
+	gin.SetMode(gin.ReleaseMode)
+	gin.DisableConsoleColor()
+
+	r := gin.New()
+	r.Use(gin.Recovery())
+	r.Use(middlewares.StructuredLogger(&logger))
+	r.Use(middlewares.MeasureResponseDuration(mc))
+	r.SetTrustedProxies(nil)
 
 	gf := grafana.NewGrafanaClient(*grafanaUrl, "", "")
 	gf.SetLogger(logger)
@@ -132,9 +133,6 @@ func main() {
 		var proxiedSnapshotResponse gin.H
 		grafana.UnmarshalResponseBody(snapshotResponse.Body, &proxiedSnapshotResponse)
 		c.JSON(snapshotResponse.StatusCode, proxiedSnapshotResponse)
-
-		// Increment the processed ops counter
-		mc.ProcessedOpsTotalCounter.Inc()
 
 		level.Info(logger).Log("msg", "Snapshot created", "uid", uid)
 	})
