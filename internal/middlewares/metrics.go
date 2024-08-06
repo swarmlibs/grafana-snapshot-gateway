@@ -5,15 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bmatcuk/doublestar/v4"
 	"github.com/gin-gonic/gin"
 	"github.com/swarmlibs/grafana-snapshot-gateway/internal/metrics"
-)
-
-var (
-	observeRoutes = []string{
-		"/api/**",
-	}
 )
 
 func MeasureResponseDuration(mc metrics.MetricsCollector) gin.HandlerFunc {
@@ -41,13 +34,4 @@ func MeasureResponseDuration(mc metrics.MetricsCollector) gin.HandlerFunc {
 		statusCode := strconv.Itoa(c.Writer.Status())
 		mc.RequestDurationSecondsHistogram.WithLabelValues(route, method, statusCode).Observe(duration.Seconds())
 	}
-}
-
-func shouldObserve(route string) bool {
-	for _, r := range observeRoutes {
-		if ok, _ := doublestar.Match(r, route); ok {
-			return true
-		}
-	}
-	return false
 }

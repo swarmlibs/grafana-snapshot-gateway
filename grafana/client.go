@@ -3,6 +3,7 @@ package grafana
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -62,7 +63,13 @@ func (g *GrafanaClient) NewRequest(method string, path string, body any) (*Reque
 }
 
 func (g *GrafanaClient) Do(req *http.Request) (*Response, error) {
-	req.SetBasicAuth(g.Username, g.Password)
-	level.Info(g.logger).Log("msg", "request", "method", req.Method, "path", req.URL.Path)
+	msg := fmt.Sprintf("%s %s", req.Method, req.URL.Path)
+	level.Info(g.logger).Log("msg", msg, "method", req.Method, "path", req.URL.Path, "host", req.URL.Host)
+
+	// Set basic auth if username and password are set
+	if g.Username != "" && g.Password != "" {
+		req.SetBasicAuth(g.Username, g.Password)
+	}
+
 	return g.http.Do(req)
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -153,10 +152,6 @@ func main() {
 
 		// Override the delete URL
 		snapshotResponse.SetDeleteUrlHost(proxiedAdvertiseAddr)
-
-		// Log the snapshot response
-		proxiedSnapshotResponseJson, _ := json.Marshal(snapshotResponse)
-		level.Debug(logger).Log("msg", "Snapshot response", "json", proxiedSnapshotResponseJson)
 
 		// Return the snapshot response
 		level.Info(logger).Log("msg", "Snapshot created successfully", "uid", originalUid, "uid_overrided", overrideUid)

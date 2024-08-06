@@ -13,6 +13,11 @@ import (
 // logger for testing purposes.
 func StructuredLogger(logger *log.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		if !shouldObserve(c.Request.URL.Path) {
+			c.Next()
+			return
+		}
+
 		start := time.Now() // Start timer
 		path := c.Request.URL.Path
 		raw := c.Request.URL.RawQuery
