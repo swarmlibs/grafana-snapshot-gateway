@@ -166,12 +166,9 @@ func main() {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
+
 		var response types.GrafanaDashboardSnapshotDeleteResponse
 		grafana.UnmarshalResponseBody(res.Body, &response)
-
-		// Log the snapshot response
-		data, _ := json.Marshal(response)
-		level.Debug(logger).Log("msg", "Snapshot response", "json", data)
 
 		// Return the snapshot response
 		level.Info(logger).Log("msg", response.Message, "key", key)
