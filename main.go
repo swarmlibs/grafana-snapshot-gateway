@@ -147,6 +147,15 @@ func main() {
 		snapshotResponse := types.GrafanaDashboardSnapshotCreateResponse{}
 		grafana.UnmarshalResponseBody(snapshotCreationResponse.Body, &snapshotResponse)
 
+		// If possible detect "Host" header and override deleteUrl
+		// The reason is that if Grafana is able to talk to the gateway, it should be use the gateway to delete the snapshot
+		// instead of the Grafana instance
+		if host := c.Request.Host; host != "" {
+			oldDeleteUrl := snapshotResponse.DeleteUrl
+			snapshotResponse.SetDeleteUrlHost(host)
+			level.Info(logger).Log("msg", "Override snapshot delete url", "delete_url", oldDeleteUrl, "delete_url_overrided", snapshotResponse.DeleteUrl)
+		}
+
 		// Return the snapshot response
 		level.Info(logger).Log("msg", "Snapshot created successfully", "uid", originalUid, "uid_overrided", overrideUid)
 		c.JSON(snapshotCreationResponse.StatusCode, snapshotResponse)
