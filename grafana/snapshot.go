@@ -14,5 +14,6 @@ func (g *GrafanaClient) GetSnapshot(key string) (*Response, error) {
 }
 
 func (g *GrafanaClient) DeleteSnapshot(key string) (*Response, error) {
-	return nil, nil
+	req, _ := g.NewRequest("GET", "/api/snapshots-delete/"+key, nil)
+	return g.Do(req)
 }

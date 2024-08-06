@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -97,8 +98,11 @@ func main() {
 	// GET /metrics
 	r.GET("/metrics", gin.WrapH(promhttp.HandlerFor(ps, promhttp.HandlerOpts{})))
 
+	// Create new snapshot
 	// POST /api/snapshots
 	r.POST("/api/snapshots", func(c *gin.Context) {
+		proxiedHost := c.Request.Host
+
 		var err error
 		var snapshot types.GrafanaDashboardSnapshot
 
@@ -112,7 +116,7 @@ func main() {
 		overrideUid := uuid.Must(uuid.NewV4()).String()
 
 		snapshot.SetKey(overrideUid)
-		level.Info(logger).Log("msg", "Creating a new snapshot", "uid", originalUid, "uid_overrided", overrideUid)
+		level.Info(logger).Log("msg", "Create new snapshot", "uid", originalUid, "uid_overrided", overrideUid)
 
 		// Create a new folder
 		_, err = gf.CreateFolder(overrideUid, overrideUid)
@@ -122,7 +126,7 @@ func main() {
 		}
 
 		// Create a new snapshot
-		snapshotResponse, err := gf.CreateSnapshot(snapshot.Key, snapshot)
+		snapshotCreationResponse, err := gf.CreateSnapshot(snapshot.Key, snapshot)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -131,12 +135,35 @@ func main() {
 		// Delete the folder
 		gf.DeleteFolder(snapshot.Key)
 
-		// Return the snapshot response
-		var proxiedSnapshotResponse gin.H
-		grafana.UnmarshalResponseBody(snapshotResponse.Body, &proxiedSnapshotResponse)
-		c.JSON(snapshotResponse.StatusCode, proxiedSnapshotResponse)
+		// Customize the snapshot response
+		snapshotResponse := types.GrafanaDashboardSnapshotResponse{}
+		grafana.UnmarshalResponseBody(snapshotCreationResponse.Body, &snapshotResponse)
 
+		// Override the delete URL
+		snapshotResponse.OverrideDeleteUrl(proxiedHost)
+
+		// Log the snapshot response
+		proxiedSnapshotResponseJson, _ := json.Marshal(snapshotResponse)
+		level.Debug(logger).Log("msg", "Snapshot response", "json", proxiedSnapshotResponseJson)
+
+		// Return the snapshot response
 		level.Info(logger).Log("msg", "Snapshot created successfully", "uid", originalUid, "uid_overrided", overrideUid)
+		c.JSON(snapshotCreationResponse.StatusCode, snapshotResponse)
+	})
+
+	// Delete Snapshot by Key
+	// GET /api/snapshots-delete/:key
+	r.GET("/api/snapshots-delete/:key", func(c *gin.Context) {
+		key := c.Param("key")
+		res, err := gf.DeleteSnapshot(key)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		var proxiedResponse gin.H
+		grafana.UnmarshalResponseBody(res.Body, &proxiedResponse)
+		c.JSON(res.StatusCode, proxiedResponse)
+		level.Info(logger).Log("msg", "Snapshot deleted successfully", "key", key)
 	})
 
 	// listen and serve, default 0.0.0.0:3003 (for windows "localhost:3003")

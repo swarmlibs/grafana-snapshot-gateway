@@ -1,6 +1,9 @@
 package types
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"net/url"
+)
 
 type GrafanaDashboardSnapshot struct {
 	Dashboard GrafanaDashboardModel `json:"dashboard"`
@@ -37,4 +40,21 @@ func (g *GrafanaDashboardSnapshot) GetDashboardModel() (GrafanaDashboardModel, e
 	}
 
 	return dashboard, nil
+}
+
+type GrafanaDashboardSnapshotResponse struct {
+	Key       string `json:"key"`
+	Url       string `json:"url"`
+	DeleteKey string `json:"deleteKey"`
+	DeleteUrl string `json:"deleteUrl"`
+}
+
+func (g *GrafanaDashboardSnapshotResponse) OverrideDeleteUrl(host string) (*GrafanaDashboardSnapshotResponse, error) {
+	deleteUrl, err := url.Parse(g.DeleteUrl)
+	if err != nil {
+		return nil, err
+	}
+	deleteUrl.Host = host
+	g.DeleteUrl = deleteUrl.String()
+	return g, nil
 }
