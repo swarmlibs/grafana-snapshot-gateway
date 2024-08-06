@@ -26,10 +26,16 @@ import (
 func main() {
 	app := kingpin.New("grafana-snapshot-gateway", "")
 
+	// Server options
 	listenAddr := app.Flag("listen-addr", "The address to listen on for HTTP requests.").Default(":3003").String()
 	advertiseAddr := app.Flag("advertise-addr", "The address to advertise in URLs.").String()
+
+	// Grafana snapshot server
 	grafanaUrl := app.Flag("grafana-url", "Grafana URL").Required().String()
 	grafanaBasicAuth := app.Flag("grafana-basic-auth", "Grafana credentials").String()
+
+	// Snapshot options
+	checkSnapshotBeforeDelete := app.Flag("check-snapshot-before-delete", "Check if snapshot exists before delete").Default("false").Bool()
 
 	var logger log.Logger
 	logger = log.NewLogfmtLogger(os.Stdout)
@@ -160,6 +166,11 @@ func main() {
 	// Delete Snapshot by Key
 	// GET /api/snapshots-delete/:key
 	r.GET("/api/snapshots-delete/:key", func(c *gin.Context) {
+		if !*checkSnapshotBeforeDelete {
+			c.JSON(http.StatusOK, gin.H{"message": "Snapshot deleted successfully"})
+			return
+		}
+
 		key := c.Param("key")
 		res, err := gf.DeleteSnapshot(key)
 		if err != nil {
@@ -171,8 +182,8 @@ func main() {
 		grafana.UnmarshalResponseBody(res.Body, &response)
 
 		// Return the snapshot response
-		level.Info(logger).Log("msg", response.Message, "key", key)
 		c.JSON(res.StatusCode, response)
+		level.Info(logger).Log("msg", response.Message, "key", key)
 	})
 
 	// listen and serve, default 0.0.0.0:3003 (for windows "localhost:3003")
