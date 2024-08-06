@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 )
 
 type GrafanaClient struct {
@@ -53,7 +52,6 @@ func (g *GrafanaClient) NewRequest(method string, path string, body any) (*Reque
 	if err != nil {
 		return nil, err
 	}
-	level.Info(g.logger).Log("msg", "request", "method", method, "path", path)
 	req, err := http.NewRequest(method, g.Url+path, bytes.NewBuffer(bodybuf))
 	if err != nil {
 		return nil, err

@@ -32,3 +32,10 @@ type GrafanaDashboardModel map[string]interface{}
 func (g *GrafanaDashboardModel) Set(key string, value string) {
 	(*g)[key] = value
 }
+
+func (g *GrafanaDashboardModel) Get(key string) string {
+	if value, ok := (*g)[key].(string); ok {
+		return value
+	}
+	return ""
+}
