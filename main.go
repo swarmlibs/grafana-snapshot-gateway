@@ -112,7 +112,7 @@ func main() {
 		overrideUid := uuid.Must(uuid.NewV4()).String()
 
 		snapshot.SetKey(overrideUid)
-		level.Info(logger).Log("msg", "Creating a new snapshot", "uid", originalUid, "new-uid", overrideUid)
+		level.Info(logger).Log("msg", "Creating a new snapshot", "uid", originalUid, "uid_overrided", overrideUid)
 
 		// Create a new folder
 		_, err = gf.CreateFolder(overrideUid, overrideUid)
@@ -136,7 +136,7 @@ func main() {
 		grafana.UnmarshalResponseBody(snapshotResponse.Body, &proxiedSnapshotResponse)
 		c.JSON(snapshotResponse.StatusCode, proxiedSnapshotResponse)
 
-		level.Info(logger).Log("msg", "Snapshot created successfully", "uid", originalUid, "new-uid", overrideUid)
+		level.Info(logger).Log("msg", "Snapshot created successfully", "uid", originalUid, "uid_overrided", overrideUid)
 	})
 
 	// listen and serve, default 0.0.0.0:3003 (for windows "localhost:3003")
