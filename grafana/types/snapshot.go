@@ -58,3 +58,7 @@ func (g *GrafanaDashboardSnapshotResponse) OverrideDeleteUrl(host string) (*Graf
 	g.DeleteUrl = deleteUrl.String()
 	return g, nil
 }
+
+type GrafanaDashboardSnapshotDeleteResponse struct {
+	Message string `json:"message"`
+}

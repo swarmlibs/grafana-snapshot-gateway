@@ -160,10 +160,16 @@ func main() {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		var proxiedResponse gin.H
-		grafana.UnmarshalResponseBody(res.Body, &proxiedResponse)
-		c.JSON(res.StatusCode, proxiedResponse)
-		level.Info(logger).Log("msg", "Snapshot deleted successfully", "key", key)
+		var response types.GrafanaDashboardSnapshotDeleteResponse
+		grafana.UnmarshalResponseBody(res.Body, &response)
+
+		// Log the snapshot response
+		data, _ := json.Marshal(response)
+		level.Debug(logger).Log("msg", "Snapshot response", "json", data)
+
+		// Return the snapshot response
+		level.Info(logger).Log("msg", response.Message, "key", key)
+		c.JSON(res.StatusCode, response)
 	})
 
 	// listen and serve, default 0.0.0.0:3003 (for windows "localhost:3003")
