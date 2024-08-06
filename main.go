@@ -12,6 +12,9 @@ import (
 	"github.com/go-kit/log/level"
 	"github.com/gofrs/uuid"
 	"github.com/prometheus-operator/prometheus-operator/pkg/versionutil"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/version"
 	"github.com/swarmlibs/grafana-snapshot-gateway/grafana"
 	"github.com/swarmlibs/grafana-snapshot-gateway/grafana/types"
@@ -55,6 +58,12 @@ func main() {
 	r.Use(middlewares.StructuredLogger(&logger))
 	r.SetTrustedProxies(nil)
 
+	ps := prometheus.NewRegistry()
+	ps.MustRegister(
+		collectors.NewGoCollector(),
+		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
+	)
+
 	gf := grafana.NewGrafanaClient(*grafanaUrl, "", "")
 	gf.SetLogger(logger)
 
@@ -75,6 +84,14 @@ func main() {
 	r.NoRoute(func(ctx *gin.Context) {
 		ctx.Redirect(http.StatusTemporaryRedirect, *grafanaUrl)
 	})
+
+	// GET /health
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok"})
+	})
+
+	// GET /metrics
+	r.GET("/metrics", gin.WrapH(promhttp.HandlerFor(ps, promhttp.HandlerOpts{})))
 
 	// POST /api/snapshots
 	r.POST("/api/snapshots", func(c *gin.Context) {
