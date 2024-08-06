@@ -2,7 +2,6 @@ package middlewares
 
 import (
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -16,22 +15,14 @@ func MeasureResponseDuration(mc metrics.MetricsCollector) gin.HandlerFunc {
 			return
 		}
 
+		// Measure the duration of the request
 		start := time.Now()
-
 		c.Next()
-
 		duration := time.Since(start)
-		route := c.Request.URL.Path
-
-		// Remove parameters in path
-		for _, p := range c.Params {
-			route = strings.Replace(route, p.Value, "", -1)
-		}
-		// Remote trailing slash
-		route = strings.TrimRight(route, "/")
 
 		method := c.Request.Method
+		path := stripRouteParams(c)
 		statusCode := strconv.Itoa(c.Writer.Status())
-		mc.RequestDurationSecondsHistogram.WithLabelValues(route, method, statusCode).Observe(duration.Seconds())
+		mc.RequestDurationSecondsHistogram.WithLabelValues(path, method, statusCode).Observe(duration.Seconds())
 	}
 }

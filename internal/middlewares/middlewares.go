@@ -1,6 +1,11 @@
 package middlewares
 
-import "github.com/bmatcuk/doublestar/v4"
+import (
+	"strings"
+
+	"github.com/bmatcuk/doublestar/v4"
+	"github.com/gin-gonic/gin"
+)
 
 var (
 	observeRoutes = []string{
@@ -15,4 +20,17 @@ func shouldObserve(route string) bool {
 		}
 	}
 	return false
+}
+
+func stripRouteParams(c *gin.Context) string {
+	path := c.Request.URL.Path
+
+	// Remove parameters in path
+	for _, p := range c.Params {
+		path = strings.Replace(path, p.Value, "", -1)
+	}
+	// Remote trailing slash
+	path = strings.TrimRight(path, "/")
+
+	return path
 }
