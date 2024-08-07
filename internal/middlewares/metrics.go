@@ -8,7 +8,7 @@ import (
 	"github.com/swarmlibs/grafana-snapshot-gateway/internal/metrics"
 )
 
-func MeasureResponseDuration(mc metrics.MetricsCollector) gin.HandlerFunc {
+func MeasureRequestDuration(mc metrics.MetricsCollector) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if !shouldObserve(c.Request.URL.Path) {
 			c.Next()

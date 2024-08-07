@@ -72,7 +72,7 @@ func main() {
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(middlewares.StructuredLogger(&logger))
-	r.Use(middlewares.MeasureResponseDuration(mc))
+	r.Use(middlewares.MeasureRequestDuration(mc))
 	r.SetTrustedProxies(nil)
 
 	gf := grafana.NewGrafanaClient(*grafanaUrl, "", "")
